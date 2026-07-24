@@ -1,0 +1,98 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: medical_ai_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-medical_ai}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  mongodb:
+    image: mongo:6
+    container_name: medical_ai_mongodb
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-root}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-example}
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+
+  redis:
+    image: redis:7-alpine
+    container_name: medical_ai_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: medical_ai_backend
+    restart: always
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-medical_ai}
+      - MONGODB_URL=mongodb://${MONGO_USER:-root}:${MONGO_PASSWORD:-example}@mongodb:27017/
+      - REDIS_URL=redis://redis:6379/0
+      - JWT_SECRET=${JWT_SECRET:-supersecretkey}
+    depends_on:
+      - db
+      - mongodb
+      - redis
+
+  worker:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: medical_ai_worker
+    restart: always
+    command: celery -A app.core.celery_app worker --loglevel=info
+    volumes:
+      - ./backend:/app
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-medical_ai}
+      - MONGODB_URL=mongodb://${MONGO_USER:-root}:${MONGO_PASSWORD:-example}@mongodb:27017/
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - db
+      - mongodb
+      - redis
+      - backend
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: medical_ai_frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  mongodb_data:
+  redis_data:
