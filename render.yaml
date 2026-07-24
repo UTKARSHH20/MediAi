@@ -1,6 +1,7 @@
 services:
   - type: web
     name: medical-ml-api
+    plan: free
     env: python
     rootDir: backend
     buildCommand: pip install --no-cache-dir -r requirements.txt
@@ -13,6 +14,7 @@ services:
 
   - type: web
     name: medical-ml-web
+    plan: free
     env: node
     rootDir: frontend
     buildCommand: npm install && npm run build
