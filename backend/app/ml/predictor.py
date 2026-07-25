@@ -10,9 +10,10 @@ class DiseasePredictor:
         self._load_model()
     
     def _load_model(self):
-        model_path = "app/ml/models/xgboost_model.pkl"
-        features_path = "app/ml/models/feature_names.pkl"
-        label_encoder_path = "app/ml/models/label_encoder.pkl"
+        base_dir = os.path.dirname(__file__)
+        model_path = os.path.join(base_dir, "models", "xgboost_model.pkl")
+        features_path = os.path.join(base_dir, "models", "feature_names.pkl")
+        label_encoder_path = os.path.join(base_dir, "models", "label_encoder.pkl")
         
         if os.path.exists(model_path):
             self.model = joblib.load(model_path)

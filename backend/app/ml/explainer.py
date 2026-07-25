@@ -12,8 +12,9 @@ class SHAPExplainer:
         self._load()
     
     def _load(self):
-        model_path = "app/ml/models/xgboost_model.pkl"
-        features_path = "app/ml/models/feature_names.pkl"
+        base_dir = os.path.dirname(__file__)
+        model_path = os.path.join(base_dir, "models", "xgboost_model.pkl")
+        features_path = os.path.join(base_dir, "models", "feature_names.pkl")
         
         if os.path.exists(model_path):
             self.model = joblib.load(model_path)
@@ -38,6 +39,10 @@ class SHAPExplainer:
             pred = self.model.predict(X)[0]
             class_idx = list(self.model.classes_).index(pred)
             shap_vals = shap_values[class_idx][0]
+        elif len(shap_values.shape) == 3:
+            pred = self.model.predict(X)[0]
+            class_idx = list(self.model.classes_).index(pred)
+            shap_vals = shap_values[0, :, class_idx]
         else:
             shap_vals = shap_values[0]
         
