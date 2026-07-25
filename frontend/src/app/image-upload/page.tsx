@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { predictAPI } from "@/lib/api";
@@ -24,12 +24,11 @@ export default function ImageUploadPage() {
   const [scanProgress, setScanProgress] = useState(0);
   const [user, setUser] = useState<Record<string, any> | null>(null);
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  useState(() => {
+  useEffect(() => {
     const stored = localStorage.getItem("user");
     if (stored) setUser(JSON.parse(stored));
     else router.push("/login");
-  });
+  }, []);
 
   const processFile = (selected: File) => {
     if (selected.size > 10 * 1024 * 1024) {

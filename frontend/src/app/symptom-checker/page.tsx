@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { predictAPI } from "@/lib/api";
@@ -68,12 +68,11 @@ export default function SymptomCheckerPage() {
   const [result, setResult] = useState<Record<string, any> | null>(null);
   const [user, setUser] = useState<Record<string, any> | null>(null);
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  useState(() => {
+  useEffect(() => {
     const stored = localStorage.getItem("user");
     if (stored) setUser(JSON.parse(stored));
     else router.push("/login");
-  });
+  }, []);
 
   const toggleSymptom = (s: string) =>
     setSelectedSymptoms((prev) =>
@@ -383,7 +382,7 @@ export default function SymptomCheckerPage() {
                           <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: "#64748B" }} axisLine={false} tickLine={false} width={110} />
                           <Tooltip
                             contentStyle={{ background: "white", border: "1px solid #E2E8F0", borderRadius: 8 }}
-                            formatter={(v: number) => [`${v}%`, "Importance"]}
+                            formatter={(v: any) => [`${v}%`, "Importance"]}
                           />
                           <Bar dataKey="value" radius={[0, 4, 4, 0]}>
                             {shapeFeatureData.map((_: any, i: number) => (
