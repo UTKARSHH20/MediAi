@@ -3,7 +3,6 @@
 Welcome to the **MediAI** repository! This project is a complete, production-ready AI medical assistant capable of predicting diseases from symptoms and diagnosing Pneumonia from Chest X-Rays.
 
 **🚀 Live Application:** [Click here to view the live website](https://mediai-frontend-a2t4.onrender.com/)  
-*(Note: Please replace the link above with your actual frontend Render URL if it differs)*
 
 ---
 
