@@ -364,7 +364,7 @@ export default function ImageUploadPage() {
                   {loading ? (
                     <><div className="spinner !w-5 !h-5" /> Scanning with AI...</>
                   ) : (
-                    <><Scan size={20} /> Run AI Analysis</>
+                    <><Scan size={20} /> Run Analysis</>
                   )}
                 </motion.button>
               )}
