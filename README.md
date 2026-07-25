@@ -1,28 +1,41 @@
-# Full-Stack AI Medical Diagnosis Assistant
+# MediAI: Full-Stack AI Medical Diagnosis Assistant
 
-A monorepo for a full-stack AI-powered medical diagnosis assistant.
+Welcome to the **MediAI** repository! This project is a complete, production-ready AI medical assistant capable of predicting diseases from symptoms and diagnosing Pneumonia from Chest X-Rays.
 
-## Architecture
+**🚀 Live Application:** [Click here to view the live website](https://mediai-frontend.onrender.com)  
+*(Note: Please replace the link above with your actual frontend Render URL if it differs)*
 
-- **Frontend**: Next.js 14, Tailwind CSS, shadcn/ui, Zustand, React Query
-- **Backend**: FastAPI, SQLAlchemy, Celery, XGBoost, PyTorch
-- **Databases**: PostgreSQL (relational), MongoDB (images), Redis (cache/queue)
-- **ML**: XGBoost (Symptom prediction), ResNet-50 (Image classification)
+---
 
-## Project Structure
+## 👨‍🏫 For Professors & Reviewers
 
-- `/backend` - FastAPI application
-- `/frontend` - Next.js application
-- `/ml` - Jupyter notebooks and ML experimentation
-- `/data` - Local dataset storage (ignored in version control)
+### 1. The Live Product
+The application is fully deployed on the internet using Render. It consists of two separate microservices working together:
+- **Frontend (Next.js & React):** Provides a clean, responsive UI for doctors and patients.
+- **Backend (FastAPI & Python):** Handles the secure database interactions, user authentication (JWT), and AI model inference.
 
-## Setup
+### 2. Machine Learning Methodology & Training
+Due to GitHub's file size limits, the raw medical datasets and the massive 77MB intermediate models were not uploaded to this repository. However, the exact methodology and training pipeline are fully documented and reproducible.
 
-1. Make sure you have Docker and Docker Compose installed.
-2. Clone this repository.
-3. Start the services:
-   ```bash
-   docker-compose up -d
-   ```
-4. Access the frontend at `http://localhost:3000`
-5. Access the backend API docs at `http://localhost:8000/docs`
+**To review the AI Training Process:**
+- 🔗 **[Google Colab Training Notebook](INSERT_YOUR_COLAB_LINK_HERE)**: Click here to view the interactive training code, data preprocessing steps, and evaluation metrics in your browser.
+- 💾 **[Raw Dataset & Models Download](INSERT_YOUR_GOOGLE_DRIVE_LINK_HERE)**: Click here to download the `data/` folder and the original large model files via Google Drive.
+
+*The finalized, optimized production models (`xgboost_model.pkl` and `xray_cnn_model.pth`) are tracked in this repository under `backend/app/ml/models/` and are actively used by the live API.*
+
+---
+
+## 🛠️ Architecture & Tech Stack
+
+- **Frontend**: Next.js 14, Tailwind CSS, shadcn/ui, React Query
+- **Backend**: FastAPI, SQLAlchemy, PostgreSQL
+- **Machine Learning**: 
+  - **Symptom Prediction:** XGBoost & scikit-learn (Random Forest)
+  - **X-Ray Analysis:** PyTorch (MobileNet V2 / ResNet CNN)
+  - **Explainability:** SHAP (SHapley Additive exPlanations)
+
+## 📂 Project Structure
+
+- `/backend` - FastAPI application, Database routing, and ML Inference (`/ml`)
+- `/frontend` - Next.js application, UI components, and API routing
+- `backend/trainer.py` & `backend/xray_trainer.py` - The core model training scripts.
