@@ -1,41 +1,47 @@
 import os
-import torch
-import torch.nn as nn
-from torchvision import models, transforms
+import onnxruntime as ort
+import numpy as np
 from PIL import Image
 import io
 
 class XRayPredictor:
     def __init__(self):
-        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        self.model = None
+        self.session = None
         self.class_names = ['NORMAL', 'PNEUMONIA']
         self._load_model()
-        
-        self.transform = transforms.Compose([
-            transforms.Resize((224, 224)),
-            transforms.ToTensor(),
-            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-        ])
 
     def _load_model(self):
-        model_path = os.path.join(os.path.dirname(__file__), 'models', 'xray_cnn_model.pth')
+        model_path = os.path.join(os.path.dirname(__file__), 'models', 'xray_cnn_model.onnx')
         if os.path.exists(model_path):
-            self.model = models.mobilenet_v2(weights=None)
-            num_ftrs = self.model.classifier[1].in_features
-            self.model.classifier[1] = nn.Linear(num_ftrs, 2)
-            
-            checkpoint = torch.load(model_path, map_location=self.device)
-            self.model.load_state_dict(checkpoint['model_state_dict'])
-            self.class_names = checkpoint.get('class_names', ['NORMAL', 'PNEUMONIA'])
-            
-            self.model = self.model.to(self.device)
-            self.model.eval()
+            # Create an InferenceSession using CPU
+            self.session = ort.InferenceSession(model_path, providers=['CPUExecutionProvider'])
+            # You could dynamically read class names from a metadata file if needed,
+            # but we know they are NORMAL and PNEUMONIA for this model.
         else:
-            print("Warning: X-Ray model not found. Run xray_trainer.py first.")
+            print("Warning: X-Ray ONNX model not found.")
+
+    def _preprocess_image(self, image: Image.Image) -> np.ndarray:
+        # Same logic as torchvision transforms:
+        # Resize to 224x224
+        image = image.resize((224, 224), Image.BILINEAR)
+        # Convert to numpy array and scale to [0, 1]
+        img_arr = np.array(image).astype(np.float32) / 255.0
+        # PyTorch expects channels first: (C, H, W)
+        img_arr = np.transpose(img_arr, (2, 0, 1))
+        # Normalize
+        mean = np.array([0.485, 0.456, 0.406]).reshape(3, 1, 1)
+        std = np.array([0.229, 0.224, 0.225]).reshape(3, 1, 1)
+        img_arr = (img_arr - mean) / std
+        # Add batch dimension: (1, C, H, W)
+        img_arr = np.expand_dims(img_arr, axis=0)
+        return img_arr.astype(np.float32)
+
+    def _softmax(self, x):
+        e_x = np.exp(x - np.max(x))
+        return e_x / e_x.sum(axis=1, keepdims=True)
 
     def predict(self, image_bytes: bytes) -> dict:
-        if self.model is None:
+        if self.session is None:
             return {
                 "predicted_disease": "Unknown (Model not trained)",
                 "confidence_score": 0.0,
@@ -45,15 +51,17 @@ class XRayPredictor:
 
         try:
             image = Image.open(io.BytesIO(image_bytes)).convert('RGB')
-            input_tensor = self.transform(image).unsqueeze(0).to(self.device)
+            input_array = self._preprocess_image(image)
             
-            with torch.no_grad():
-                outputs = self.model(input_tensor)
-                probabilities = torch.nn.functional.softmax(outputs, dim=1)[0]
-                confidence, preds = torch.max(probabilities, 0)
-                
-            predicted_class = self.class_names[preds.item()]
-            confidence_score = confidence.item()
+            # Run inference
+            input_name = self.session.get_inputs()[0].name
+            outputs = self.session.run(None, {input_name: input_array})[0]
+            
+            # Post-process (softmax)
+            probabilities = self._softmax(outputs)[0]
+            pred_idx = np.argmax(probabilities)
+            confidence_score = float(probabilities[pred_idx])
+            predicted_class = self.class_names[pred_idx]
             
             if predicted_class == 'PNEUMONIA':
                 if confidence_score > 0.9:
