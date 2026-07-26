@@ -16,16 +16,16 @@ class DiseasePredictor:
         label_encoder_path = os.path.join(base_dir, "models", "label_encoder.pkl")
         
         try:
-            if os.path.exists(model_path):
-                self.model = joblib.load(model_path)
-                self.feature_names = joblib.load(features_path)
-                if os.path.exists(label_encoder_path):
-                    self.label_encoder = joblib.load(label_encoder_path)
-                else:
-                    self.label_encoder = None
+            if not os.path.exists(model_path):
+                print("Models not found. Training dynamically...")
+                from app.ml.trainer import train_models
+                train_models()
+                
+            self.model = joblib.load(model_path)
+            self.feature_names = joblib.load(features_path)
+            if os.path.exists(label_encoder_path):
+                self.label_encoder = joblib.load(label_encoder_path)
             else:
-                print("Warning: Model not found. Run trainer.py first.")
-                self.feature_names = []
                 self.label_encoder = None
         except Exception as e:
             print(f"Failed to load models (likely version mismatch): {e}. Retraining dynamically...")

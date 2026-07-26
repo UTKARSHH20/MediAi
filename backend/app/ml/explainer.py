@@ -17,10 +17,14 @@ class SHAPExplainer:
         features_path = os.path.join(base_dir, "models", "feature_names.pkl")
         
         try:
-            if os.path.exists(model_path):
-                self.model = joblib.load(model_path)
-                self.feature_names = joblib.load(features_path)
-                self.explainer = shap.TreeExplainer(self.model)
+            if not os.path.exists(model_path):
+                print("Explainer: Models not found. Training dynamically...")
+                from app.ml.trainer import train_models
+                train_models()
+                
+            self.model = joblib.load(model_path)
+            self.feature_names = joblib.load(features_path)
+            self.explainer = shap.TreeExplainer(self.model)
         except Exception as e:
             print(f"Explainer failed to load models: {e}. Retraining dynamically...")
             from app.ml.trainer import train_models
