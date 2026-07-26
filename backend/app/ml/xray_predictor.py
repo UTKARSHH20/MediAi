@@ -13,11 +13,17 @@ class XRayPredictor:
     def _load_model(self):
         model_path = os.path.join(os.path.dirname(__file__), 'models', 'xray_cnn_model.onnx')
         if os.path.exists(model_path):
-            # Create an InferenceSession using CPU
-            self.session = ort.InferenceSession(model_path, providers=['CPUExecutionProvider'])
-            # You could dynamically read class names from a metadata file if needed,
-            # but we know they are NORMAL and PNEUMONIA for this model.
+            try:
+                # Create an InferenceSession using CPU
+                self.session = ort.InferenceSession(model_path, providers=['CPUExecutionProvider'])
+                self.error = None
+            except Exception as e:
+                self.session = None
+                self.error = str(e)
+                print(f"Failed to load ONNX model: {e}")
         else:
+            self.session = None
+            self.error = "Model file not found on disk."
             print("Warning: X-Ray ONNX model not found.")
 
     def _preprocess_image(self, image: Image.Image) -> np.ndarray:
@@ -42,11 +48,12 @@ class XRayPredictor:
 
     def predict(self, image_bytes: bytes) -> dict:
         if self.session is None:
+            err_msg = getattr(self, "error", "Unknown error loading model")
             return {
                 "predicted_disease": "Unknown (Model not trained)",
                 "confidence_score": 0.0,
                 "risk_level": "low",
-                "recommended_action": "Model not available"
+                "recommended_action": f"Model not available: {err_msg}"
             }
 
         try:
