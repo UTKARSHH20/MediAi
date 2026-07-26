@@ -58,7 +58,6 @@ data/*
 *.joblib
 *.h5
 *.bin
-*.onnx
 *.pt
 *.safetensors
 backend/venv/
