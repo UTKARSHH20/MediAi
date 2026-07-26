@@ -16,7 +16,15 @@ class SHAPExplainer:
         model_path = os.path.join(base_dir, "models", "xgboost_model.pkl")
         features_path = os.path.join(base_dir, "models", "feature_names.pkl")
         
-        if os.path.exists(model_path):
+        try:
+            if os.path.exists(model_path):
+                self.model = joblib.load(model_path)
+                self.feature_names = joblib.load(features_path)
+                self.explainer = shap.TreeExplainer(self.model)
+        except Exception as e:
+            print(f"Explainer failed to load models: {e}. Retraining dynamically...")
+            from app.ml.trainer import train_models
+            train_models()
             self.model = joblib.load(model_path)
             self.feature_names = joblib.load(features_path)
             self.explainer = shap.TreeExplainer(self.model)
